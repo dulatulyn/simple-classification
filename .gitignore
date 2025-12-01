@@ -1,5 +1,6 @@
 .env
 pycache/
 __pycache__
-docs/media/me/
+docs/media/img/me
 venv/
+.DS_Store

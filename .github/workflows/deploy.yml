@@ -15,8 +15,9 @@ jobs:
       - name: Build image
         run: docker build -t ${{ env.APP_NAME }}:latest .
       - name: Save image
-        run: | 
-          docker save ${{ env.APP_NAME }}:latest | gzip > ${{ env.APP_NAME }}.tar.gz
+        run: docker save -o ${{ env.APP_NAME }}.tar ${{ env.APP_NAME }}:latest 
+      - name: Compress image
+        run: gzip -9 ${{ env.APP_NAME }}.tar
       - uses: actions/upload-artifact@v4
         with:
           name: docker-image

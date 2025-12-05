@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    container_name: simple_classification
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

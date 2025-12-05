@@ -70,6 +70,8 @@ class PredictorService:
     def _load_img_for_canonical(self, label):
         for name in self.canon_to_names[label]:
             p = self.hamsters_dir / f"{name}.png"
+            if not p.exists():
+                continue
             img = cv2.imread(str(p))
             if img is not None:
                 img = cv2.resize(img, (256, 256), interpolation=cv2.INTER_AREA)

@@ -2,5 +2,6 @@
 pycache/
 __pycache__
 docs/media/img/me
+docs/media/dataset/*.npy
 venv/
 .DS_Store

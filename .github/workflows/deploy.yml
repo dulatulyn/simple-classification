@@ -18,12 +18,19 @@ jobs:
         run: docker build -t ${{ env.APP_NAME }}:latest .
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
+      - name: Free up space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo docker system prune -af
       - name: Save image
-        run: docker save ${{ env.APP_NAME }}:latest -o ${{ env.APP_NAME }}.tar
+        run: docker save ${{ env.APP_NAME }}:latest | gzip -9 > ${{ env.APP_NAME }}.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: docker-image
-          path: ${{ env.APP_NAME}}.tar.gz
+          path: ${{ env.APP_NAME }}.tar.gz
           retention-days: 1
   deploy:
     runs-on: ubuntu-latest
@@ -42,7 +49,7 @@ jobs:
         run: | 
           sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p 22 -o StrictHostKeyChecking=no "${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}" << 'EOF'
           set -e
-          sudo docker load -i /tmp/${{ env.APP_NAME }}.tar
+          sudo docker load < /tmp/simple_classification.tar.gz
           sudo docker rm -f ${{ env.APP_NAME }} || true
           sudo docker run -d --name ${{ env.APP_NAME }} --restart unless-stopped -p 8000:8000 ${{ env.APP_NAME }}:latest
           EOF

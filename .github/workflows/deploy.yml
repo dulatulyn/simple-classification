@@ -49,7 +49,7 @@ jobs:
         run: | 
           sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p 22 -o StrictHostKeyChecking=no "${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}" << 'EOF'
           set -e
-          sudo docker load < /tmp/simple_classification.tar.gz
-          sudo docker rm -f ${{ env.APP_NAME }} || true
-          sudo docker run -d --name ${{ env.APP_NAME }} --restart unless-stopped -p 8000:8000 ${{ env.APP_NAME }}:latest
+          gunzip -c /tmp/simple_classification.tar.gz | docker load
+          docker rm -f simple_classification || true
+          docker run -d --name simple_classification --restart unless-stopped -p 8000:8000 simple_classification:latest
           EOF

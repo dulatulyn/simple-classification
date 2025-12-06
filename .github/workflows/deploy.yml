@@ -3,9 +3,13 @@ on:
   push:
     branches: [prod]
   workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
 
 env:
   APP_NAME: simple_classification
+  REGISTRY_IMAGE: ghcr.io/${{ github.repository_owner }}/simple_classification:latest
 
 jobs:
   build:
@@ -14,8 +18,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build image
         run: docker build -t ${{ env.APP_NAME }}:latest .
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
       - name: Save image
-        run: docker save -o ${{ env.APP_NAME }}.tar ${{ env.APP_NAME }}:latest 
+        run: docker save -o ${{ env.APP_NAME }}.tar ${{ env.APP_NAME }}:latest
       - name: Compress image
         run: gzip -9 ${{ env.APP_NAME }}.tar
       - uses: actions/upload-artifact@v4
@@ -39,11 +45,10 @@ jobs:
           sshpass -p "${{ secrets.VM_PASSWORD }}" scp -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o PubkeyAuthentication=no -P 22 "${{ env.APP_NAME }}.tar.gz" "${{ secrets.VM_USERNAME}}@${{ secrets.VM_HOST}}:/tmp/${{ env.APP_NAME }}.tar.gz"
       - name: Deploy on VM
         run: | 
-          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p 22 -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p 22 -o StrictHostKeyChecking=no "${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}" << 'EOF'
           set -e
           gunzip -c /tmp/${{ env.APP_NAME }}.tar.gz | sudo docker load
-          sudo docker rm -f ${{ env.APP_NAME}} || true
-          sudo docker run -d --name ${{ env.APP_NAME }}
-          --restart unless-stopped -p 8000:8000 ${{ env.APP_NAME }}:latest
+          sudo docker rm -f ${{ env.APP_NAME }} || true
+          sudo docker run -d --name ${{ env.APP_NAME }} --restart unless-stopped -p 8000:8000 ${{ env.APP_NAME }}:latest
           EOF
 
